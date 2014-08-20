@@ -43,7 +43,7 @@ static bootloader_status_t      m_update_status;        /**< Current update stat
 
 static void pstorage_callback_handler(pstorage_handle_t * handle, uint8_t op_code, uint32_t result, uint8_t * p_data, uint32_t data_len)
 {
-    // If we are in BOOTLOADER_SETTINGS_SAVING state and we receive an PSTORAGE_STORE_OP_CODE 
+    // If we are in BOOTLOADER_SETTINGS_SAVING state and we receive an PSTORAGE_STORE_OP_CODE
     // response then settings has been saved and update has completed.
     if ((m_update_status == BOOTLOADER_SETTINGS_SAVING) && (op_code == PSTORAGE_STORE_OP_CODE))
     {
@@ -72,7 +72,7 @@ static void wait_for_events(void)
         // Event received. Process it from the scheduler.
         app_sched_execute();
 
-        if ((m_update_status == BOOTLOADER_COMPLETE) || 
+        if ((m_update_status == BOOTLOADER_COMPLETE) ||
             (m_update_status == BOOTLOADER_TIMEOUT)  ||
             (m_update_status == BOOTLOADER_RESET))
         {
@@ -92,9 +92,9 @@ bool bootloader_app_is_valid(uint32_t app_addr)
     {
         return false;
     }
-    
+
     bool success = false;
-    
+
     switch (app_addr)
     {
         case DFU_BANK_0_REGION_START:
@@ -116,7 +116,7 @@ bool bootloader_app_is_valid(uint32_t app_addr)
                 success = (image_crc == p_bootloader_settings->bank_0_crc);
             }
             break;
-            
+
         case DFU_BANK_1_REGION_START:
         default:
             // No implementation needed.
@@ -132,8 +132,8 @@ static void bootloader_settings_save(bootloader_settings_t * p_settings)
     uint32_t err_code = pstorage_clear(&m_bootsettings_handle, sizeof(bootloader_settings_t));
     APP_ERROR_CHECK(err_code);
 
-    err_code = pstorage_store(&m_bootsettings_handle, 
-                              (uint8_t *)p_settings, 
+    err_code = pstorage_store(&m_bootsettings_handle,
+                              (uint8_t *)p_settings,
                               sizeof(bootloader_settings_t),
                               0);
     APP_ERROR_CHECK(err_code);
@@ -153,7 +153,7 @@ void bootloader_dfu_update_process(dfu_update_status_t update_status)
         settings.bank_0_size = update_status.app_size;
         settings.bank_0      = BANK_VALID_APP;
         settings.bank_1      = BANK_INVALID_APP;
-        
+
         m_update_status      = BOOTLOADER_SETTINGS_SAVING;
         bootloader_settings_save(&settings);
     }
@@ -171,7 +171,7 @@ void bootloader_dfu_update_process(dfu_update_status_t update_status)
         settings.bank_0_size = 0;
         settings.bank_0      = BANK_ERASED;
         settings.bank_1      = p_bootloader_settings->bank_1;
-        
+
         bootloader_settings_save(&settings);
     }
     else if (update_status.status_code == DFU_BANK_1_ERASED)
@@ -180,7 +180,7 @@ void bootloader_dfu_update_process(dfu_update_status_t update_status)
         settings.bank_0_crc  = p_bootloader_settings->bank_0_crc;
         settings.bank_0_size = p_bootloader_settings->bank_0_size;
         settings.bank_1      = BANK_ERASED;
-        
+
         bootloader_settings_save(&settings);
     }
     else if (update_status.status_code == DFU_RESET)
@@ -206,30 +206,30 @@ uint32_t bootloader_dfu_start(void)
     storage_params.cb          = pstorage_callback_handler;
     storage_params.block_size  = sizeof(bootloader_settings_t);
     storage_params.block_count = 1;
-    
+
     err_code = pstorage_init();
-    if (err_code != NRF_SUCCESS)    
+    if (err_code != NRF_SUCCESS)
     {
         return err_code;
     }
 
     err_code = pstorage_register(&storage_params, &m_bootsettings_handle);
-    if (err_code != NRF_SUCCESS)    
+    if (err_code != NRF_SUCCESS)
     {
         return err_code;
     }
 
-    // Clear swap if banked update is used.    
-    err_code = dfu_init(); 
-    if (err_code != NRF_SUCCESS)    
+    // Clear swap if banked update is used.
+    err_code = dfu_init();
+    if (err_code != NRF_SUCCESS)
     {
         return err_code;
     }
-    
+
     err_code = dfu_transport_update_start();
 
     wait_for_events();
-    
+
     return err_code;
 }
 
@@ -245,7 +245,7 @@ static void interrupts_disable(void)
     irq                    = 0;
     // Fetch the current interrupt settings.
     interrupt_setting_mask = NVIC->ISER[0];
-    
+
     for (; irq < MAX_NUMBER_INTERRUPTS; irq++)
     {
         if (interrupt_setting_mask & (IRQ_ENABLED << irq))
@@ -253,7 +253,7 @@ static void interrupts_disable(void)
             // The interrupt was enabled, and hence disable it.
             NVIC_DisableIRQ((IRQn_Type) irq);
         }
-    }        
+    }
 }
 
 
@@ -266,7 +266,12 @@ void bootloader_app_start(uint32_t app_addr)
 
     interrupts_disable();
 
+#ifdef S310_STACK
     err_code = sd_softdevice_forward_to_application();
+#else
+    err_code = sd_softdevice_vector_table_base_set(CODE_REGION_1_START);
+#endif
+
     APP_ERROR_CHECK(err_code);
 
     bootloader_util_app_start(CODE_REGION_1_START);

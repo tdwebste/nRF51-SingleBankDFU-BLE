@@ -14,6 +14,8 @@
         <TargetCommonOption>
           <Device>nRF51822_xxAA</Device>
           <Vendor>Nordic Semiconductor</Vendor>
+          <PackID>NordicSemiconductor.nRF_DeviceFamilyPack.1.0.3</PackID>
+          <PackURL>http://www.keil.com/pack/</PackURL>
           <Cpu>IRAM(0x20000000-0x20003FFF) IROM(0-0x3FFFF) CLOCK(16000000) CPUTYPE("Cortex-M0") ESEL ELITTLE</Cpu>
           <FlashUtilSpec></FlashUtilSpec>
           <StartupFile>"Device\Nordic\nRF51822\Source\templates\arm\arm_startup_nrf51.s"("Nordic Semiconductor nRF51822_xxAA Startup Code")</StartupFile>
@@ -72,6 +74,8 @@
             <UserProg2Name></UserProg2Name>
             <UserProg1Dos16Mode>0</UserProg1Dos16Mode>
             <UserProg2Dos16Mode>0</UserProg2Dos16Mode>
+            <nStopB1X>0</nStopB1X>
+            <nStopB2X>0</nStopB2X>
           </BeforeMake>
           <AfterMake>
             <RunUserProg1>0</RunUserProg1>
@@ -128,6 +132,7 @@
             <RestoreFunctions>1</RestoreFunctions>
             <RestoreToolbox>1</RestoreToolbox>
             <LimitSpeedToRealTime>0</LimitSpeedToRealTime>
+            <RestoreSysVw>1</RestoreSysVw>
           </Simulator>
           <Target>
             <UseTarget>1</UseTarget>
@@ -139,8 +144,8 @@
             <RestoreFunctions>0</RestoreFunctions>
             <RestoreToolbox>1</RestoreToolbox>
             <RestoreTracepoints>0</RestoreTracepoints>
-            <RestoreTracepoints>1</RestoreTracepoints>
-            <RestoreTracepoints>1</RestoreTracepoints>
+            <RestoreSysVw>1</RestoreSysVw>
+            <UsePdscDebugDescription>1</UsePdscDebugDescription>
           </Target>
           <RunDebugAfterBuild>0</RunDebugAfterBuild>
           <TargetSelection>6</TargetSelection>
@@ -305,8 +310,8 @@
               </OCR_RVCT3>
               <OCR_RVCT4>
                 <Type>1</Type>
-                <StartAddress>0x3c800</StartAddress>
-                <Size>0x3400</Size>
+                <StartAddress>0x3c000</StartAddress>
+                <Size>0x4000</Size>
               </OCR_RVCT4>
               <OCR_RVCT5>
                 <Type>1</Type>
@@ -361,7 +366,7 @@
               <MiscControls>--c99</MiscControls>
               <Define>NRF51,DEBUG_NRF_USER,BOARD_NRF6310, BOOTLOADER_BANKED BLE_STACK_SUPPORT_REQD</Define>
               <Undefine></Undefine>
-              <IncludePath>..;..\include;..\include\ble_transport;..\..\..\..\..\Include;..\..\..\..\..\Include\sd_common;..\..\..\..\..\Include\app_common;..\..\..\..\..\Include\ble;..\..\..\..\..\Include\ble\ble_services;..\..\..\..\..\Include\s110</IncludePath>
+              <IncludePath>..;..\include;..\include\ble_transport;..\..\..\nordic\Nordic\nrf51822\Include;..\..\..\nordic\Nordic\nrf51822\Include\sd_common;..\..\..\nordic\Nordic\nrf51822\Include\app_common;..\..\..\nordic\Nordic\nrf51822\Include\ble;..\..\..\nordic\Nordic\nrf51822\Include\ble\ble_services;..\..\..\nordic\Nordic\nrf51822\Include\s110;..\..\..\SofM\include</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -407,7 +412,7 @@
             <File>
               <FileName>system_nrf51.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\..\..\..\..\..\Source\templates\system_nrf51.c</FilePath>
+              <FilePath>.\..\..\..\nordic\Nordic\nrf51822\Source\templates\system_nrf51.c</FilePath>
             </File>
             <File>
               <FileName>arm_startup_nrf51.s</FileName>
@@ -447,7 +452,7 @@
             <File>
               <FileName>ble_dfu.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\..\..\Source\ble\ble_services\ble_dfu.c</FilePath>
+              <FilePath>..\..\..\nordic\Nordic\nrf51822\Source\ble\ble_services\ble_dfu.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -457,32 +462,32 @@
             <File>
               <FileName>app_timer.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\..\..\Source\app_common\app_timer.c</FilePath>
+              <FilePath>..\..\..\nordic\Nordic\nrf51822\Source\app_common\app_timer.c</FilePath>
             </File>
             <File>
               <FileName>app_scheduler.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\..\..\Source\app_common\app_scheduler.c</FilePath>
+              <FilePath>..\..\..\nordic\Nordic\nrf51822\Source\app_common\app_scheduler.c</FilePath>
             </File>
             <File>
               <FileName>app_gpiote.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\..\..\Source\app_common\app_gpiote.c</FilePath>
+              <FilePath>..\..\..\nordic\Nordic\nrf51822\Source\app_common\app_gpiote.c</FilePath>
             </File>
             <File>
               <FileName>crc16.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\..\..\Source\app_common\crc16.c</FilePath>
+              <FilePath>..\..\..\nordic\Nordic\nrf51822\Source\app_common\crc16.c</FilePath>
             </File>
             <File>
               <FileName>softdevice_handler.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\..\..\Source\sd_common\softdevice_handler.c</FilePath>
+              <FilePath>..\..\..\nordic\Nordic\nrf51822\Source\sd_common\softdevice_handler.c</FilePath>
             </File>
             <File>
               <FileName>pstorage.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\..\..\Source\app_common\pstorage.c</FilePath>
+              <FilePath>..\..\..\nordic\Nordic\nrf51822\Source\app_common\pstorage.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -492,7 +497,7 @@
             <File>
               <FileName>hci_mem_pool.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\..\..\Source\app_common\hci_mem_pool.c</FilePath>
+              <FilePath>..\..\..\nordic\Nordic\nrf51822\Source\app_common\hci_mem_pool.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -507,17 +512,17 @@
             <File>
               <FileName>ble_conn_params.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\..\..\Source\ble\ble_conn_params.c</FilePath>
+              <FilePath>..\..\..\nordic\Nordic\nrf51822\Source\ble\ble_conn_params.c</FilePath>
             </File>
             <File>
               <FileName>ble_advdata.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\..\..\Source\ble\ble_advdata.c</FilePath>
+              <FilePath>..\..\..\nordic\Nordic\nrf51822\Source\ble\ble_advdata.c</FilePath>
             </File>
             <File>
               <FileName>ble_srv_common.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\..\..\Source\ble\ble_services\ble_srv_common.c</FilePath>
+              <FilePath>..\..\..\nordic\Nordic\nrf51822\Source\ble\ble_services\ble_srv_common.c</FilePath>
             </File>
           </Files>
         </Group>
