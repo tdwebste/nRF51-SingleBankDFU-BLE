@@ -124,7 +124,7 @@ static void dfu_cb_handler(uint32_t result, uint8_t * p_data)
  *
  * @details   This function will convert a given nRF51 error code to a DFU Response Value. The
  *            result of this function depends on the current DFU procedure in progress, given as
- *            input in current_dfu_{
+ *            input in current_dfu_proc parameter.
  *
  * @param[in] err_code         The nRF51 error code to be converted.
  * @param[in] current_dfu_proc Current DFU procedure in progress.
@@ -570,7 +570,7 @@ static void advertising_start(void)
         err_code = sd_ble_gap_adv_start(&m_adv_params);
         APP_ERROR_CHECK(err_code);
 
-    //    state_timers_start();
+        state_timers_start();
 
         m_is_advertising = true;
     }
@@ -608,7 +608,7 @@ static void on_ble_evt(ble_evt_t * p_ble_evt)
     {
         case BLE_GAP_EVT_CONNECTED:
 
-         //   bonded_state_timers_start();
+            bonded_state_timers_start();
             m_conn_handle    = p_ble_evt->evt.gap_evt.conn_handle;
             m_is_advertising = false;
             break;
