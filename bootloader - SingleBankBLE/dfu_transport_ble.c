@@ -38,13 +38,6 @@
 #include <stddef.h>
 #include <string.h>
 
-/*
-#define ADVERTISING_LED_PIN_NO               LED_0             // Is on when device is advertising.
-#define CONNECTED_LED_PIN_NO                 LED_1             // Is on when device has connected.
-#define ASSERT_LED_PIN_NO                    LED_7             // Is on when application has asserted.
-*/
-
-
 //#define DEVICE_NAME                          "DfuTarg"                                               /**< Name of device. Will be included in the advertising data. */
 #define MANUFACTURER_NAME                    "SoundofMotion"                                   /**< Manufacturer. Will be passed to Device Information Service. */
 
@@ -596,7 +589,7 @@ static void advertising_stop(void)
         APP_ERROR_CHECK(err_code);
 
         //stop advertise
-     //   led_timers_stop();
+        led_timers_stop();
 
         m_is_advertising = false;
     }
@@ -622,7 +615,7 @@ static void on_ble_evt(ble_evt_t * p_ble_evt)
 
         case BLE_GAP_EVT_DISCONNECTED:
             //unbonded
-        //    led_timers_stop();
+            led_timers_stop();
 
             if (!m_tear_down_in_progress)
             {
@@ -807,7 +800,8 @@ uint32_t dfu_transport_update_start()
 
     m_pkt_type = PKT_TYPE_INVALID;
 
-    leds_init();
+//  alread done in the main
+//    leds_init();
 
     err_code = softdevice_ble_evt_handler_set(ble_evt_dispatch);
     if (err_code != NRF_SUCCESS)

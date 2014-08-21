@@ -494,6 +494,11 @@
               <FileType>1</FileType>
               <FilePath>..\..\..\nordic\Nordic\nrf51822\Source\app_common\pstorage.c</FilePath>
             </File>
+            <File>
+              <FileName>nrf_delay.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\nordic\Nordic\nrf51822\Source\nrf_delay\nrf_delay.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
