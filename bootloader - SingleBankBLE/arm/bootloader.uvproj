@@ -364,9 +364,9 @@
             <useXO>0</useXO>
             <VariousControls>
               <MiscControls>--c99</MiscControls>
-              <Define>NRF51,DEBUG_NRF_USER,BOARD_NRF6310, BOOTLOADER_BANKED BLE_STACK_SUPPORT_REQD</Define>
+              <Define>NRF51,DEBUG_NRF_USER, BOOTLOADER_BANKED BLE_STACK_SUPPORT_REQD</Define>
               <Undefine></Undefine>
-              <IncludePath>..;..\include;..\include\ble_transport;..\..\..\nordic\Nordic\nrf51822\Include;..\..\..\nordic\Nordic\nrf51822\Include\sd_common;..\..\..\nordic\Nordic\nrf51822\Include\app_common;..\..\..\nordic\Nordic\nrf51822\Include\ble;..\..\..\nordic\Nordic\nrf51822\Include\ble\ble_services;..\..\..\nordic\Nordic\nrf51822\Include\s110;..\..\..\SofM\include</IncludePath>
+              <IncludePath>..;..\include;..\include\ble_transport;..\..\..\nordic\Nordic\nrf51822\Include;..\..\..\nordic\Nordic\nrf51822\Include\sd_common;..\..\..\nordic\Nordic\nrf51822\Include\app_common;..\..\..\nordic\Nordic\nrf51822\Include\ble;..\..\..\nordic\Nordic\nrf51822\Include\ble\ble_services;..\..\..\nordic\Nordic\nrf51822\Include\s110;..\..\..\SofM\include;..\..\..\SofM\include</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -443,6 +443,11 @@
               <FileName>bootloader_util_arm.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\bootloader_util_arm.c</FilePath>
+            </File>
+            <File>
+              <FileName>led_lib.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\SofM\src\led_lib.c</FilePath>
             </File>
           </Files>
         </Group>

@@ -27,48 +27,13 @@
  * -# Activate Image, boot application.
  *
  */
-#include "dfu.h"
-#include "dfu_transport.h"
-#include "bootloader.h"
-#include <stdint.h>
-#include <string.h>
-#include <stddef.h>
-#include "nordic_common.h"
-#include "nrf.h"
-#ifndef S310_STACK
-#include "nrf_mbr.h"
-#endif // S310_STACK
-#include "app_error.h"
-#include "nrf_gpio.h"
-#include "nrf51_bitfields.h"
-#include "ble.h"
-#include "nrf51.h"
-#include "ble_hci.h"
-#include "app_scheduler.h"
-#include "app_timer.h"
-#include "app_gpiote.h"
-#include "nrf_error.h"
-#include "boards.h"
-#include "ble_debug_assert_handler.h"
-#include "softdevice_handler.h"
-#include "pstorage_platform.h"
+#include "main.h"
 
-#define BOOTLOADER_BUTTON_PIN           BUTTON_7                                                /**< Button used to enter SW update mode. */
+app_timer_id_t               m_led_on_timer_id;
+app_timer_id_t               m_led_off_timer_id;
+app_timer_id_t               m_dfu_state_timer_id;
 
-
-#define IS_SRVC_CHANGED_CHARACT_PRESENT     0                                       /**< Include or not the service_changed characteristic. if not enabled, the server's database cannot be changed for the lifetime of the device*/
-
-#define APP_GPIOTE_MAX_USERS            1                                                       /**< Number of GPIOTE users in total. Used by button module and dfu_transport_serial module (flow control). */
-
-#define APP_TIMER_PRESCALER             0                                                       /**< Value of the RTC1 PRESCALER register. */
-#define APP_TIMER_MAX_TIMERS            3                                                       /**< Maximum number of simultaneously created timers. */
-#define APP_TIMER_OP_QUEUE_SIZE         4                                                       /**< Size of timer operation queues. */
-
-#define BUTTON_DETECTION_DELAY          APP_TIMER_TICKS(50, APP_TIMER_PRESCALER)                /**< Delay from a GPIOTE event until a button is reported as pushed (in number of timer ticks). */
-
-#define SCHED_MAX_EVENT_DATA_SIZE       MAX(APP_TIMER_SCHED_EVT_SIZE, 0)                        /**< Maximum size of scheduler events. */
-
-#define SCHED_QUEUE_SIZE                20                                                      /**< Maximum number of events in the scheduler queue. */
+uint32_t led_t_on, led_t_off, led_repeat;
 
 static ble_gap_addr_t           m_ble_addr;
 
@@ -84,7 +49,7 @@ static ble_gap_addr_t           m_ble_addr;
  */
 void app_error_handler(uint32_t error_code, uint32_t line_num, const uint8_t * p_file_name)
 {
-    nrf_gpio_pin_set(LED_7);
+    nrf_gpio_pin_set(LED_0);
     // This call can be used for debug purposes during application development.
     // @note CAUTION: Activating this code will write the stack to flash on an error.
     //                This function should NOT be used in a final product.
@@ -120,33 +85,107 @@ void assert_nrf_callback(uint16_t line_num, const uint8_t * p_file_name)
  *
  * @details Initializes all LEDs used by the application.
  */
-static void leds_init(void)
-{
-    nrf_gpio_cfg_output(LED_0);
-    nrf_gpio_cfg_output(LED_1);
-    nrf_gpio_cfg_output(LED_2);
-    nrf_gpio_cfg_output(LED_7);
-}
 
-
-/**@brief Function for clearing the LEDs.
+/**@brief Function for entering application
  *
- * @details Clears all LEDs used by the application.
+ * @details
+ *  Select a bank region to use as application region.
+ *  @note: Only applications running from DFU_BANK_0_REGION_START is supported.
  */
-static void leds_off(void)
+static void launch_app()
 {
-    nrf_gpio_pin_clear(LED_0);
-    nrf_gpio_pin_clear(LED_1);
-    nrf_gpio_pin_clear(LED_2);
-    nrf_gpio_pin_clear(LED_7);
+    uint32_t err_code;
+
+    leds_off();
+    if (bootloader_app_is_valid(DFU_BANK_0_REGION_START))
+    {
+        err_code = sd_power_gpregret_clr(0xFF);
+        err_code = sd_power_gpregret_set(ENTER_BOOTLOADER_VALUE);
+        if (err_code != NRF_SUCCESS)
+        {
+            APP_ERROR_CHECK(err_code);
+        }
+        bootloader_app_start(DFU_BANK_0_REGION_START);
+    }
+        /* //debugging failed launches
+        leds_off();
+        for (int i=0; i<3; i++)
+        {
+            leds_on();
+            nrf_delay_ms(1000);
+            leds_off();
+            nrf_delay_ms(200);
+            leds_on();
+            nrf_delay_ms(500);
+            leds_off();
+            nrf_delay_ms(200);
+            leds_on();
+            nrf_delay_ms(250);
+            leds_off();
+            nrf_delay_ms(100);
+            leds_on();
+            nrf_delay_ms(250);
+            leds_off();
+            nrf_delay_ms(200);
+            leds_on();
+            nrf_delay_ms(500);
+            leds_off();
+            nrf_delay_ms(200);
+            leds_on();
+            nrf_delay_ms(1000);
+            leds_off();
+        }
+        */
 }
 
 
 /**@brief Function for initializing the GPIOTE handler module.
  */
+ /*
 static void gpiote_init(void)
 {
     APP_GPIOTE_INIT(APP_GPIOTE_MAX_USERS);
+}
+*/
+
+void led_on_timeout_handler(void * p_context)
+{
+    //on timeout
+    leds_off();
+}
+void led_cycle_handler(void * p_context)
+{
+    uint32_t err_code;
+    //repeat cycle
+    leds_on();
+    // Start led timers.
+    err_code = app_timer_start(m_led_on_timer_id, led_t_on, NULL);
+    APP_ERROR_CHECK(err_code);
+}
+void dfu_led_fail(void)
+{
+    //indicate no dfu
+    led_timers_stop();
+    leds_off();
+    leds_on();
+    nrf_delay_ms(DFU_FAIL_ON_INTERVAL);
+    leds_off();
+}
+void dfu_led_success(void)
+{
+    //success
+    for (int i=0; i<DFU_SUCESS_COUNT; i++)
+    {
+        leds_on();
+        nrf_delay_ms(DFU_SUCESS_ON_INTERVAL);
+        leds_off();
+        nrf_delay_ms(DFU_SUCESS_OFF_INTERVAL);
+    }
+}
+void dfu_timeout_handler(void * p_context)
+{
+    dfu_led_fail();
+    launch_app();
 }
 
 
@@ -156,20 +195,92 @@ static void gpiote_init(void)
  */
 static void timers_init(void)
 {
+    uint32_t err_code;
     // Initialize timer module, making it use the scheduler.
-    APP_TIMER_INIT(APP_TIMER_PRESCALER, APP_TIMER_MAX_TIMERS, APP_TIMER_OP_QUEUE_SIZE, true);
+    APP_TIMER_INIT(APP_TIMER_PRESCALER, APP_TIMER_MAX_TIMERS,
+            APP_TIMER_OP_QUEUE_SIZE, true);
+
+    // led on timer.
+    err_code = app_timer_create(&m_led_on_timer_id,
+            APP_TIMER_MODE_SINGLE_SHOT,
+            led_on_timeout_handler);
+    APP_ERROR_CHECK(err_code);
+    // led cycle timer.
+    err_code = app_timer_create(&m_led_off_timer_id,
+            APP_TIMER_MODE_REPEATED,
+            led_cycle_handler);
+    APP_ERROR_CHECK(err_code);
+
+    // dfu state timer
+    err_code = app_timer_create(&m_dfu_state_timer_id,
+            APP_TIMER_MODE_SINGLE_SHOT,
+            dfu_timeout_handler);
+    APP_ERROR_CHECK(err_code);
 }
 
+
+/**@brief Function for starting application timers.
+ */
+void state_timers_start(void)
+{
+    uint32_t err_code;
+    // Start state timers.
+    err_code = app_timer_start(m_dfu_state_timer_id,
+            DFU_STATE_TIME, NULL);
+    APP_ERROR_CHECK(err_code);
+    //advertise
+    led_timers_stop();
+    led_t_on = ADV_LED_ON_INTERVAL;
+    led_t_off = ADV_LED_OFF_INTERVAL;
+    led_timers_start();
+}
+void bonded_state_timers_start(void)
+{
+    uint32_t err_code;
+     //Connected Bonded
+    state_timers_stop();
+    led_timers_stop();
+    // Start state timers.
+    err_code = app_timer_start(m_dfu_state_timer_id,
+            BONDED_STATE_TIME, NULL);
+    APP_ERROR_CHECK(err_code);
+    led_t_on = BON_LED_ON_INTERVAL;
+    led_t_off = BON_LED_OFF_INTERVAL;
+    led_timers_start();
+}
+void state_timers_stop(void)
+{
+    uint32_t err_code;
+    // Stop state timers.
+    err_code = app_timer_stop(m_dfu_state_timer_id);
+    APP_ERROR_CHECK(err_code);
+}
+void led_timers_start(void)
+{
+    uint32_t err_code;
+    leds_on();
+    // Start led timers.
+    err_code = app_timer_start(m_led_on_timer_id, led_t_on, NULL);
+    APP_ERROR_CHECK(err_code);
+    err_code = app_timer_start(m_led_off_timer_id,
+            (led_t_on + led_t_off), NULL);
+    APP_ERROR_CHECK(err_code);
+}
+/**@brief Function for stoping application timers.
+ */
+void led_timers_stop(void)
+{
+    uint32_t err_code;
+    // Stop led timers.
+    err_code = app_timer_stop(m_led_on_timer_id);
+    APP_ERROR_CHECK(err_code);
+    err_code = app_timer_stop(m_led_off_timer_id);
+    APP_ERROR_CHECK(err_code);
+    leds_off();
+}
 
 /**@brief Function for initializing the button module.
  */
-static void buttons_init(void)
-{
-    nrf_gpio_cfg_sense_input(BOOTLOADER_BUTTON_PIN,
-                             BUTTON_PULL,
-                             NRF_GPIO_PIN_SENSE_LOW);
-}
-
 
 /**@brief Function for dispatching a BLE stack event to all modules with a BLE stack event handler.
  *
@@ -230,12 +341,40 @@ static void scheduler_init(void)
     APP_SCHED_INIT(SCHED_MAX_EVENT_DATA_SIZE, SCHED_QUEUE_SIZE);
 }
 
+/**@brief 2.4G rf
+ */
+static void test_rf(void)
+{
+	// RF_TEST pin set in board file
+    nrf_gpio_cfg_sense_input(RF_TEST_IN_PIN_30,
+                             NRF_GPIO_PIN_PULLUP,
+                             NRF_GPIO_PIN_SENSE_LOW);
+    nrf_gpio_cfg_sense_input(RF_TEST_IN_PIN_00,
+                             NRF_GPIO_PIN_PULLUP,
+                             NRF_GPIO_PIN_SENSE_LOW);
+    nrf_gpio_cfg_sense_input(RF_TEST_IN_PIN_01,
+                             NRF_GPIO_PIN_PULLUP,
+                             NRF_GPIO_PIN_SENSE_LOW);
+    nrf_gpio_cfg_sense_input(RF_TEST_IN_PIN_02,
+                             NRF_GPIO_PIN_PULLUP,
+                             NRF_GPIO_PIN_SENSE_LOW);
+    nrf_delay_us(1000); //1ms stablize
+	if( (nrf_gpio_pin_read(RF_TEST_IN_PIN_30) == 0)
+        || (nrf_gpio_pin_read(RF_TEST_IN_PIN_00) == 0)
+        || (nrf_gpio_pin_read(RF_TEST_IN_PIN_01) == 0)
+        || (nrf_gpio_pin_read(RF_TEST_IN_PIN_02) == 0) )
+    {
+        launch_app();
+	}
+}
+
 /**@brief Function for application main entry.
  */
 int main(void)
 {
     uint32_t err_code;
-    bool     bootloader_is_pushed = false;
+	uint32_t gprepret_value;
+    bool     power_on_reset = true;
 
     leds_init();
 
@@ -248,38 +387,44 @@ int main(void)
 
     // Initialize.
     timers_init();
-    gpiote_init();
-    buttons_init();
+
+//    gpiote_init();
     ble_stack_init();
     scheduler_init();
 
-    bootloader_is_pushed = ((nrf_gpio_pin_read(BOOTLOADER_BUTTON_PIN) == 0)? true: false);
+    //Read alatech rf test pin
+    test_rf();
 
-    if (bootloader_is_pushed || (!bootloader_app_is_valid(DFU_BANK_0_REGION_START)))
+	//Read the retained memory for deciding wether DFU need or not
+    err_code = sd_power_gpregret_get(&gprepret_value);
+    APP_ERROR_CHECK(err_code);
+    power_on_reset = ((gprepret_value == ENTER_BOOTLOADER_VALUE)? false: true);
+    if (power_on_reset || (!bootloader_app_is_valid(DFU_BANK_0_REGION_START)))
     {
-        nrf_gpio_pin_set(LED_2);
-
         // Initiate an update of the firmware.
         err_code = bootloader_dfu_start();
-        APP_ERROR_CHECK(err_code);
-
-        nrf_gpio_pin_clear(LED_2);
+        if (err_code != NRF_SUCCESS)
+        {
+            APP_ERROR_CHECK(err_code);
+            dfu_led_fail();
+            err_code = sd_power_gpregret_clr(0xFF);
+            NVIC_SystemReset();
+        }
+        else
+        {
+            power_on_reset = false;
+            dfu_led_success();
+        }
+        if (err_code != NRF_SUCCESS)
+        {
+            APP_ERROR_CHECK(err_code);
+        }
     }
 
-    if (bootloader_app_is_valid(DFU_BANK_0_REGION_START))
-    {
-        leds_off();
-
-        // Select a bank region to use as application region.
-        // @note: Only applications running from DFU_BANK_0_REGION_START is supported.
-        bootloader_app_start(DFU_BANK_0_REGION_START);
-
-    }
-
-    nrf_gpio_pin_clear(LED_0);
-    nrf_gpio_pin_clear(LED_1);
-    nrf_gpio_pin_clear(LED_2);
-    nrf_gpio_pin_clear(LED_7);
-
+    launch_app();
+    // if cannot launch_app
+    // clear flag to force the dfu to run
+    // reset
+    err_code = sd_power_gpregret_clr(0xFF);
     NVIC_SystemReset();
 }
